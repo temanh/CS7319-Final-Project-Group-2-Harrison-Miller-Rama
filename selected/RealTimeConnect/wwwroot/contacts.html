@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Contacts - Realtime Connect</title>
+    <link rel="stylesheet" href="/css/site.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="/js/contacts.js" defer></script>
+</head>
+
+<body>
+    <main class="container">
+        <header class="app-header">
+            <h1>Contacts</h1>
+            <div class="header-actions">
+                <span id="userInfo"></span>
+                <a href="/dashboard.html" class="nav-link">Back to Chat</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <div class="contacts-page">
+            <div class="contacts-container">
+                <div class="contacts-section">
+                    <h2>My Contacts</h2>
+                    <div class="contacts-search">
+                        <input id="contactListSearch" type="text" placeholder="Search contacts..." />
+                    </div>
+                    <ul id="contactsList" class="contacts-list"></ul>
+                </div>
+
+                <div class="add-contact-section">
+                    <h2>Add New Contact</h2>
+                    <div class="form-group">
+                        <label>Search by Username</label>
+                        <input id="userSearch" type="text" placeholder="Search for users..." />
+                        <ul id="searchResults" class="search-results"></ul>
+                    </div>
+                    <div id="addError" class="error-msg"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

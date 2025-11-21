@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Realtime Connect Simulator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<style>
+body { font-family: Arial; margin: 20px; }
+#log { border:1px solid #ccc; padding:10px; height:200px; overflow:auto; margin-top:10px; }
+input, button { margin-top: 10px; }
+#tokenInput { width: 600px; }
+</style>
+</head>
+<body>
+<h2>Realtime Connect Simulator</h2>
+
+<label>JWT Token:</label><br>
+<input id="tokenInput" placeholder="Paste your JWT token here">
+<button id="connectBtn">Connect</button><br>
+
+<label>Message:</label><br>
+<input id="msgInput" placeholder="Type message here" disabled>
+<button id="sendBtn" disabled>Send Message</button>
+
+<pre id="log"></pre>
+
+<script>
+const logEl = document.getElementById("log");
+function log(msg) { logEl.textContent += msg + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+let connection;
+const conversationId = 1;
+
+// Connect button
+document.getElementById("connectBtn").addEventListener("click", () => {
+    const token = document.getElementById("tokenInput").value.trim();
+    if (!token) { log("❌ Please enter a JWT token."); return; }
+
+    connection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5120/chatHub?access_token=" + token)
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    connection.on("ReceiveMessage", msg => log("💬 Received: " + JSON.stringify(msg)));
+
+    connection.start()
+        .then(() => {
+            log("✅ Connected to ChatHub");
+            document.getElementById("sendBtn").disabled = false;
+            document.getElementById("msgInput").disabled = false;
+        })
+        .catch(err => log("❌ Connection failed: " + err));
+
+    connection.onclose(err => {
+        log("❌ Connection closed: " + err);
+        document.getElementById("sendBtn").disabled = true;
+        document.getElementById("msgInput").disabled = true;
+    });
+});
+
+// Send message
+document.getElementById("sendBtn").addEventListener("click", async () => {
+    const msg = document.getElementById("msgInput").value;
+    if (!msg) return;
+    try {
+        await connection.invoke("SendMessage", conversationId, msg);
+        log("➡️ Sent: " + msg);
+        document.getElementById("msgInput").value = "";
+    } catch (err) {
+        log("❌ Failed to send: " + err);
+    }
+});
+</script>
+</body>
+</html>

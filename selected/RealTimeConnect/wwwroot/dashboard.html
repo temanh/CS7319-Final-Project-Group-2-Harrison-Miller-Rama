@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Realtime Connect - Dashboard</title>
+    <link rel="stylesheet" href="/css/site.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="/js/app.js" defer></script>
+</head>
+
+<body>
+    <main class="container">
+        <header class="app-header">
+            <h1>Realtime Connect</h1>
+            <div class="header-actions">
+                <span id="userInfo"></span>
+                <a href="/contacts.html" class="nav-link">Contacts</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <div class="chat-app">
+            <aside class="sidebar">
+                <div class="sidebar-top">
+                    <input id="searchConvos" placeholder="Search conversations" />
+                </div>
+                <ul id="convoList" class="convo-list"></ul>
+                <div class="sidebar-bottom">
+                    <button id="newConvoBtn">New Conversation</button>
+                </div>
+            </aside>
+
+            <section class="main">
+                <div class="conversation-header">
+                    <h2 id="conversationTitle">Select a conversation</h2>
+                    <div id="conversationMeta" class="meta"></div>
+                </div>
+
+                <div id="messages" class="messages"></div>
+                <div id="typingIndicator" class="typing"></div>
+
+                <div class="composer">
+                    <input id="messageInput" placeholder="Type a message" />
+                    <button id="sendBtn">Send</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- New Conversation Modal -->
+        <div id="newConvoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Start a Conversation</h3>
+                    <button id="closeModalBtn" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Select Contact(s)</label>
+                        <ul id="contactListModal" class="search-results"></ul>
+                        <div id="noContactsMsg" style="display:none; color:#666; margin-top:8px;">
+                            No contacts found. Add
+                            contacts on the <a href="/contacts.html">Contacts</a> page.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Conversation Name (optional)</label>
+                        <input id="convoNameModal" type="text" placeholder="Leave empty to use contact's name" />
+                    </div>
+                    <div id="modalError" class="error-msg"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelModalBtn" class="btn-secondary">Cancel</button>
+                    <button id="createConvoBtn" class="btn-primary">Create Conversation</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>
+
