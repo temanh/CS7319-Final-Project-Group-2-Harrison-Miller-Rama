@@ -3,7 +3,56 @@
 Below is a comprehensive guide to setting up our RealTimeConnect software. It is assumed you have a Docker account and the Docker Desktop application installed on your computer along with homebrew *(if on Mac)* and your IDE *(either Visual Studio or VS Code)*. If you don't have any of the above, I would recommend setting them up before continuing.
 
 ## **Setup (Windows)**
-WIP
+
+**Open the Solution**
+- Open Visual Studio (2022 or later).
+- Select File → Open → Project/Solution.
+- Navigate to the project folder.
+- Open the file: **RealTimeConnect.sln**
+
+**Restore Dependencies**
+
+Visual Studio will automatically restore NuGet packages.
+If not, right-click the solution → Restore NuGet Packages.
+
+**Set the Startup Project**
+- In Solution Explorer, right-click the RealTimeConnect project.
+- Select Set as Startup Project.
+
+**Check the Database Connection**
+
+The app uses a SQL Server database connection defined in appsettings.json:
+
+```json
+"ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=RealTimeConnectDb;Trusted_Connection=True;"
+}
+```
+
+If needed, update the connection string to match your local SQL setup.
+
+**Ensure proper tables are setup prior so applications runs smoothly**
+
+Refer to the tables *(SQL)* below in the Mac setup.
+
+**Run the Application**
+
+Press F5 or click Run.
+Visual Studio will:
+- Build the project
+- Launch the backend
+- Serve the web frontend from wwwroot
+- Open the browser automatically at the login page
+
+**Test Real-Time Chat**
+- Log in using two different users (or two browsers).
+- Open the same conversation.
+- Send a message. You will see real-time updates via SignalR.
+
+**Stopping the Application**
+- Press Shift + F5 or close the browser window. The server stops automatically.
+
+And that is the setup for Windows.
 
 ## **Setup (Mac)**
 This setup will be different if you are using a Mac.
@@ -181,33 +230,110 @@ Finally, we will build and run the project by simply running the following comma
 The project is now running. You can now use the url provided below and go to the login page: http://localhost:5120/login.html
 
 
-## **Architecture Analysis**
-### **Architecture Comparisons**
-**Client-Server**:
-- Centralized backend handling all logic & messaging
-- Simpler (fewer moving parts)
-- Tight coupling
-- Single point of failure
 
-**Microservices:**
-- Split into separate services
-- Loose coupling
-- Allows for scalability
+## Implementation Differences Between Architecture Styles
 
-**Key Differences**:
-- Coupling (tight vs. loose coupling)
-- Scalability (scaling as a whole vs. scaling per service)
-- Complexity (simplicity vs. operational overhead)
+### 1. Code Organization & Project Structure
+
+#### Client-Server Architecture
+- Implemented as a **single unified project**.
+- All core modules—authentication, messaging, conversation management, user handling, exist within the same codebase.
+- Shared models (User, Message, Conversation, etc.) are defined once and referenced directly.
+- One database context and one API layer handle all endpoints (e.g., `/auth`, `/messages`, `/conversations`).
+
+#### Microservices Architecture
+- Implemented as **separate services**, each running as its own project:
+  - **Auth Service** — registration, login, JWT handling  
+  - **Messaging Service** — conversations, WebSocket delivery, message persistence  
+  - **User Service** — contacts, presence, user lookup  
+- Shared models had to be duplicated or moved into shared libraries.
+- Each service owns its **own database**, resulting in distributed storage.
+- Inter-service communication uses **HTTP APIs**, requiring DTOs and explicit boundaries.
+
+---
+
+### 2. Components & Reusable Modules
+
+#### Client-Server
+- Reusable logic lives internally:
+  - Shared EF Core models  
+  - Shared repositories  
+  - Shared middleware (auth, exception handling)  
+- Components communicate via **direct method calls** within the same runtime.
+
+#### Microservices
+- Requires **reusable shared packages** for:
+  - Common models  
+  - Token validation logic  
+  - Service-to-service API contracts  
+- Services communicate through **external connectors**:
+  - HTTP REST APIs  
+  - WebSocket server for messaging  
+- Network failures must be accounted for (timeouts, retries, error propagation).
+
+---
+
+### 3. Connectors (Communication Patterns)
+
+#### Client-Server
+- Communication pattern:
+  - Client → HTTP → Single API service  
+  - WebSockets handled by the same backend  
+- No network-level separation between internal components.
+
+#### Microservices
+- Each service exposes its own HTTP endpoints:
+  - Gateway Service → `/api/auth/*`
+  - User Service → `/api/users/*`
+  - Chat Service → `/api/messages/*`
+- Requests between services require:
+  - JSON serialization  
+  - Authentication propagation  
+  - Network-level error handling  
+- The Messaging Service must call the Auth Service to validate users before delivering messages.
+
+---
+
+### 4. Deployment & Runtime Differences
+
+#### Client-Server
+- One deployment (single Docker image / executable).
+- Single database.
+- Logging, configuration, and health checks are centralized.
+
+#### Microservices
+- Multiple deployments (each service independently hosted).
+- Each service requires:
+  - Its own container  
+  - Its own environment variables, ports, health checks  
+- Requires routing layer or API Gateway for external exposure.
+
+---
+
+### 5. Testing & Debugging Differences
+
+#### Client-Server
+- Very easy local testing:
+  - One database  
+  - One service to run  
+  - Centralized logging  
+- Debugging is straightforward—breakpoints hit the same process.
+
+#### Microservices
+- Requires running multiple services at once to test interactions.
+- Must verify:
+  - API contract correctness  
+  - Inter-service communication reliability  
+  - Data consistency across service-specific databases  
+- Debugging requires checking multiple logs across multiple runtimes.
 
 
-### Rationale for Selection
-**Why Client-Server:**
-- Lower development complexity (easier to build, test and debug)
-- Faster implementation
-- Reduced overhead
-- Sufficient performance at scale (real-time messaging and persistence can be handled efficiently by one service)
+## Why These Differences Matter
+This comparison highlights that the two implementations diverge significantly in:
 
-**Why not Microservices:**
-- Significant runtime and deployment overhead per service (Auth, messaging, etc.)
-- Requires more infrastructure (more databases, load balancing, CI/CD, etc.)
-- Benefits come at larger scale
+- **Source code structure**  
+- **Component design**  
+- **Connectors and communication patterns**  
+- **Operational complexity and runtime behavior**  
+
+These distinctions directly influenced the final decision to use the **client-server architecture** for this project.
